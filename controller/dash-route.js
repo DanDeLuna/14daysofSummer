@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const { Publicacion } = require("../models");
-const withAuth = require("../utils/auth");
+const wAuth = require("../utils/auth");
 
-router.get("/", withAuth, (req, res) => {
+router.get("/", wAuth, (req, res) => {
     Publicacion.findAll({
       where: {
         userId: req.session.userId
