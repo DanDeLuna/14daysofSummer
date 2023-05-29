@@ -1,0 +1,11 @@
+const router = require('express').Router();
+
+const dashboardRutas = require('./dashboard-routes.js');
+const casaRutas = require('./home-routes');
+const apiRutas = require("./api")
+
+router.use('/', casaRutas);
+router.use('/dashboard', dashboardRutas);
+router.use('/api', apiRutas);
+
+module.exports = router;
