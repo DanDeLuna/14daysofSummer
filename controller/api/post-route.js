@@ -1,53 +1,131 @@
-const router = require("express").Router();
-const { Publicacion } = require("../../models/");
-const wAuth = require("../../utils/auth");
+const router = require('express').Router();
+const sequelize = require('../../config/connection');
+const { Post, User, Comment } = require('../../models');
+const withAuth = require('../../utils/auth');
 
-router.post("/", wAuth, (req, res) => {
-  const body = req.body;
-  console.log(req.session.userId);
-  Publicacion.create({ ...body, userId: req.session.userId })
-    .then(newPost => {
-      res.json(newPost);
-    })
+router.get('/', (req, res) => {
+  Post.findAll({
+    attributes: [
+      'id',
+      'post_content',
+      'title',
+      'created_at',
+    ],
+    include: [
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+        include: {
+          model: User,
+          attributes: ['username']
+        }
+      },
+      {
+        model: User,
+        attributes: ['username']
+      }
+    ]
+  })
+    .then(dbPostData => res.json(dbPostData))
     .catch(err => {
+      console.log(err);
       res.status(500).json(err);
     });
 });
 
-router.put("/:id", wAuth, (req, res) => {
-  console.log(req.body, req.params.id)
-  Publicacion.update(req.body, {
+router.get('/:id', (req, res) => {
+  Post.findOne({
     where: {
       id: req.params.id
-    }
-  })
-    .then(affectedRows => {
-      if (affectedRows > 0) {
-        res.status(200).end();
-      } else {
-        res.status(404).end();
+    },
+    attributes: [
+      'id',
+      'post_content',
+      'title',
+      'created_at',
+    ],
+    include: [
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+        include: {
+          model: User,
+          attributes: ['username']
+        }
+      },
+      {
+        model: User,
+        attributes: ['username']
       }
+    ]
+  })
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No post found with this id' });
+        return;
+      }
+      res.json(dbPostData);
     })
     .catch(err => {
+      console.log(err);
       res.status(500).json(err);
     });
 });
 
-router.delete("/:id", wAuth, (req, res) => {
-  console.log(req.body, req.params.id)
-  Publicacion.destroy({
+router.post('/', withAuth, (req, res) => {
+  Post.create({
+    title: req.body.title,
+    post_content: req.body.post_content,
+    user_id: req.session.user_id
+  })
+    .then(dbPostData => res.json(dbPostData))
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
+});
+
+router.put('/:id', withAuth, (req, res) => {
+  Post.update(
+    {
+      title: req.body.title,
+      post_content: req.body.post_content
+    },
+    {
+      where: {
+        id: req.params.id
+      }
+    }
+  )
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No post found with this id' });
+        return;
+      }
+      res.json(dbPostData);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
+});
+
+router.delete('/:id', withAuth, (req, res) => {
+  console.log('id', req.params.id);
+  Post.destroy({
     where: {
       id: req.params.id
     }
   })
-    .then(affectedRows => {
-      if (affectedRows > 0) {
-        res.status(200).end();
-      } else {
-        res.status(404).end();
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No post found with this id' });
+        return;
       }
+      res.json(dbPostData);
     })
     .catch(err => {
+      console.log(err);
       res.status(500).json(err);
     });
 });
