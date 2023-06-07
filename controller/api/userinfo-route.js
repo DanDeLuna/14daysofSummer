@@ -129,7 +129,7 @@ router.delete('/:id', withAuth, (req, res) => {
   })
     .then(dbUserData => {
       if (!dbUserData) {
-        res.status(404).json({ message: 'No user found with this id' });
+        res.status(404).json({ message: 'No user found ' });
         return;
       }
       res.json(dbUserData);
